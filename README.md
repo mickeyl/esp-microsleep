@@ -25,11 +25,16 @@ dependencies:
         git: "https://github.com/mickeyl/esp-microsleep.git"
 ```
 
-or use 
+2. Configure your project to allow for esp_timer dispatching via ISR:
 
-2. Configure your `sdkconfig` to allow for esp_timer dispatching via ISR.
-3. Configure the proper amount of task local storage.
-4. Configure the appropriate thread local storage index.
+   `CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD=y`
+3. Configure the proper amount of thread local storage.
+   If you're not using thread local storage elsewhere in your app, 2 will be enough:
+
+   `CONFIG_FREERTOS_THREAD_LOCAL_STORAGE_POINTERS=2`
+4. Configure the appropriate thread local storage index:
+
+   `CONFIG_ESP_MICROSLEEP_TLS_INDEX=1`
 
 ## Usage
 
