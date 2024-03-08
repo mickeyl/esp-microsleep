@@ -31,6 +31,12 @@
 #include "esp_timer.h"
 #include "rom/ets_sys.h"
 
+#include "sdkconfig.h"
+
+#ifndef CONFIG_ESP_MICROSLEEP_TLS_INDEX
+#error CONFIG_ESP_MICROSLEEP_TLS_INDEX is not defined
+#endif
+
 static uint64_t esp_microsleep_compensation = 0;
 
 static void IRAM_ATTR esp_microsleep_isr_handler(void* arg) {
@@ -46,10 +52,10 @@ uint64_t esp_microsleep_calibrate() {
     const uint64_t calibration_usec = 100;
     uint64_t compensation = 0;
 
-    esp_microsleep_delay(0, 0); // to preheat the timer for this task
+    esp_microsleep_delay(0); // to preheat the timer for this task
     for (int i = 0; i < calibration_loops; i++) {
         uint64_t start = esp_timer_get_time();
-        esp_microsleep_delay(calibration_usec, 0);
+        esp_microsleep_delay(calibration_usec);
         uint64_t diff = esp_timer_get_time() - start - calibration_usec;
         compensation += diff;
     }
@@ -57,9 +63,9 @@ uint64_t esp_microsleep_calibrate() {
     return esp_microsleep_compensation;
 }
 
-void esp_microsleep_delay(uint64_t ms, BaseType_t index) {
+void esp_microsleep_delay(uint64_t ms) {
 
-    esp_timer_handle_t timer = (esp_timer_handle_t) pvTaskGetThreadLocalStoragePointer(NULL, index);
+    esp_timer_handle_t timer = (esp_timer_handle_t) pvTaskGetThreadLocalStoragePointer(NULL, CONFIG_ESP_MICROSLEEP_TLS_INDEX);
     if (!timer) {
         const esp_timer_create_args_t oneshot_timer_args = {
             .callback = esp_microsleep_isr_handler,
@@ -67,7 +73,7 @@ void esp_microsleep_delay(uint64_t ms, BaseType_t index) {
             .dispatch_method = ESP_TIMER_ISR,
         };
         ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &timer));
-        vTaskSetThreadLocalStoragePointer(NULL, index, (void*) timer);
+        vTaskSetThreadLocalStoragePointer(NULL, CONFIG_ESP_MICROSLEEP_TLS_INDEX, (void*) timer);
     }
 
     if (ms == 0) { return; }

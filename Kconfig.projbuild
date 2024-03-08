@@ -1,0 +1,23 @@
+#
+# ESP Microsleep Configuration
+#
+menu "ESP Microsleep Configuration"
+    config ESP_MICROSLEEP_TLS_INDEX
+        depends on FREERTOS_THREAD_LOCAL_STORAGE_POINTERS > 1
+        int "Thread Local Storage Index"
+        default 1
+        range 0 1 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 2
+        range 0 2 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 3
+        range 0 3 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 4
+        range 0 4 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 5
+        range 0 5 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 6
+        range 0 6 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 7
+        range 0 7 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 8
+        range 0 8 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 9
+        range 0 9 if FREERTOS_THREAD_LOCAL_STORAGE_POINTERS = 10
+        help
+            Defines the index of the thread local storage pointer for ESP Microsleep.
+            Choose one that is not otherwised used in your program!
+    comment "Disabled, because FreeRTOS thread local storage pointers is < 2"
+        depends on FREERTOS_THREAD_LOCAL_STORAGE_POINTERS < 2
+endmenu

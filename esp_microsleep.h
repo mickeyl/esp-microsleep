@@ -28,8 +28,7 @@
 #ifndef ESP_MICROSLEEP_H
 #define ESP_MICROSLEEP_H
 
-#include "stdint.h"
-#include "freertos/FreeRTOS.h"
+#include "stdint.h" // for uint64_t
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,11 +62,10 @@ uint64_t esp_microsleep_calibrate();
  * b) the task-local-storage-index you give is not used by another part of your program.
  *
  * @param[in] us Number of microseconds to delay.
- * @param[in] index The task-local-storage-index.
  *
  * @return None.
  */
-inline void esp_microsleep_delay(uint64_t us, BaseType_t index);
+void esp_microsleep_delay(uint64_t us);
 
 #ifdef __cplusplus
 }
