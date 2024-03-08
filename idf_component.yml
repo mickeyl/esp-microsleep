@@ -1,4 +1,4 @@
-name: "esp_microsleep"
+name: "esp-microsleep"
 description: "FreeRTOS task delay with microsecond granularity."
 url: "https://github.com/mickeyl/esp-microsleep"
 license: "MIT"
