@@ -22,11 +22,14 @@ for a notification from the timer's ISR.
 ```yml
 dependencies:
     mickeyl/esp_microsleep:
-        git: "https://github.com/mickeyl/esp_microsleep.git"
+        git: "https://github.com/mickeyl/esp-microsleep.git"
 ```
+
+or use 
 
 2. Configure your `sdkconfig` to allow for esp_timer dispatching via ISR.
 3. Configure the proper amount of task local storage.
+4. Configure the appropriate thread local storage index.
 
 ## Usage
 
@@ -34,11 +37,11 @@ dependencies:
 // Include the header file.
 #include <esp_microsleep.h>
 
-// Calibrate the compensation value (for more accurate sleep times)
+// Calibrate the compensation value (for more accurate sleep times).
 esp_microsleep_calibrate();
 
-// Call to delay the currently running task.
-esp_microsleep_delay(400, 0);
+// Call to delay the currently running task for 400 µs.
+esp_microsleep_delay(400);
 ```
 
 ## Implementation Notes
