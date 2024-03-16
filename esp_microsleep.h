@@ -29,10 +29,13 @@
 #define ESP_MICROSLEEP_H
 
 #include "stdint.h" // for uint64_t
+#include "sdkconfig.h" // for CONFIG_ESP_MICROSLEEP_TLS_INDEX
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef CONFIG_ESP_MICROSLEEP_TLS_INDEX
 
 /**
  * @brief Calibrate the microsleep compensation value.
@@ -67,8 +70,10 @@ uint64_t esp_microsleep_calibrate();
  */
 void esp_microsleep_delay(uint64_t us);
 
+#endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX
+
 #ifdef __cplusplus
 }
-#endif
+#endif // __cplusplus
 
-#endif
+#endif // ESP_MICROSLEEP_H

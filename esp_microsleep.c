@@ -31,11 +31,7 @@
 #include "esp_timer.h"
 #include "rom/ets_sys.h"
 
-#include "sdkconfig.h"
-
-#ifndef CONFIG_ESP_MICROSLEEP_TLS_INDEX
-#error CONFIG_ESP_MICROSLEEP_TLS_INDEX is not defined
-#endif
+#ifdef CONFIG_ESP_MICROSLEEP_TLS_INDEX
 
 static uint64_t esp_microsleep_compensation = 0;
 
@@ -86,3 +82,5 @@ void esp_microsleep_delay(uint64_t ms) {
     ESP_ERROR_CHECK(esp_timer_start_once(timer, ms - esp_microsleep_compensation));
     xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // or ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 }
+
+#endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX
