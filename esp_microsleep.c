@@ -31,7 +31,7 @@
 #include "esp_timer.h"
 #include "rom/ets_sys.h"
 
-#ifdef CONFIG_ESP_MICROSLEEP_TLS_INDEX
+#if defined(CONFIG_ESP_MICROSLEEP_TLS_INDEX) && defined(CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD)
 
 static uint64_t esp_microsleep_compensation = 0;
 

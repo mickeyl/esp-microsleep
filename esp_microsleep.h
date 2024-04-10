@@ -29,22 +29,22 @@
 #define ESP_MICROSLEEP_H
 
 #include "stdint.h" // for uint64_t
-#include "sdkconfig.h" // for CONFIG_ESP_MICROSLEEP_TLS_INDEX
+#include "sdkconfig.h" // for CONFIG_*
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifdef CONFIG_ESP_MICROSLEEP_TLS_INDEX
+#if defined(CONFIG_ESP_MICROSLEEP_TLS_INDEX) && defined(CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD)
 
 /**
  * @brief Calibrate the microsleep compensation value.
- * 
+ *
  * Adjusts the global microsleep compensation value for your system.
- * 
+ *
  * On an ESP32S3 with a 240Mhz CPU clock, the compensation value is 15.
  * It may be higher, if you have more tasks running microsleep at the same time.
- * 
+ *
  * It's advisable to calibrate when the system is under typical load, i.e.
  * not necessarily when the system is idle or booting.
 */
@@ -58,7 +58,7 @@ uint64_t esp_microsleep_calibrate();
  * works, you can not achieve reliable delays for small amounts of ticks.
  *
  * This has been inspired by the discussion at https://esp32.com/viewtopic.php?f=13&t=38644.
- * 
+ *
  * To achieve concurrency safety when calling this from multiple tasks, FreeRTOS task local storage is used.
  * If you are already using FreeRTOS' task local storage in your program, you need to ensure that
  * a) your configuration includes support for FreeRTOS task local storage, and
@@ -70,7 +70,7 @@ uint64_t esp_microsleep_calibrate();
  */
 void esp_microsleep_delay(uint64_t us);
 
-#endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX
+#endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX && CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD
 
 #ifdef __cplusplus
 }
