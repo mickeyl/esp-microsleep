@@ -69,7 +69,8 @@ uint64_t esp_microsleep_calibrate();
  * @return None.
  */
 void esp_microsleep_delay(uint64_t us);
-
+#else
+#warning esp_microsleep not available due to missing configuration
 #endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX && CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD
 
 #ifdef __cplusplus
