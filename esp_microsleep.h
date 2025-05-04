@@ -24,6 +24,27 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/**
+ * @file esp_microsleep.h
+ * @brief Provides a microsecond-level delay function for ESP32 using esp_timer and FreeRTOS task notifications.
+ *
+ * @note Configuration Requirements:
+ * This module relies on specific ESP-IDF Kconfig settings:
+ *  - `CONFIG_ESP_MICROSLEEP_TLS_INDEX`: Defines the FreeRTOS Task Local Storage (TLS) index used to store
+ *    per-task timer handles. Ensure this index is reserved and not used by other components.
+ *  - `CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD`: Must be enabled to allow the timer callback
+ *    (`esp_microsleep_isr_handler`) to run directly from the timer ISR context for minimal latency.
+ *    This typically requires `CONFIG_ESP_TIMER_ISR_AFFINITY` to be configured appropriately
+ *    (e.g., `ESP_TIMER_ISR_AFFINITY_CPU0` or `ESP_TIMER_ISR_AFFINITY_CPU1`).
+ *
+ * @details
+ * This implementation uses a one-shot `esp_timer` per task, managed via TLS.
+ * It includes a calibration function (`esp_microsleep_calibrate`) to measure the overhead
+ * of the timer mechanism and uses `ets_delay_us` for very short delays where the timer
+ * overhead would be significant.
+ */
+
 #pragma once
 #ifndef ESP_MICROSLEEP_H
 #define ESP_MICROSLEEP_H
@@ -64,7 +85,7 @@ uint64_t esp_microsleep_calibrate();
  * a) your configuration includes support for FreeRTOS task local storage, and
  * b) the task-local-storage-index you give is not used by another part of your program.
  *
- * @param[in] us Number of microseconds to delay.
+ * @param us Microseconds to delay.
  *
  * @return None.
  */

@@ -35,6 +35,10 @@
 
 static uint64_t esp_microsleep_compensation = 0;
 
+/**
+ * @brief ISR handler called when the one-shot timer expires.
+ *        Notifies the task that initiated the delay.
+ */
 static void IRAM_ATTR esp_microsleep_isr_handler(void* arg) {
     TaskHandle_t task = (TaskHandle_t)(arg);
     BaseType_t higherPriorityTaskWoken = pdFALSE;
@@ -59,27 +63,42 @@ uint64_t esp_microsleep_calibrate() {
     return esp_microsleep_compensation;
 }
 
-void esp_microsleep_delay(uint64_t ms) {
+void esp_microsleep_delay(uint64_t us) {
 
+    // Retrieve the timer handle associated with the calling task from Task Local Storage (TLS).
+    // This allows each task to have its own timer instance without needing global variables
+    // or complex management, especially crucial since timers are associated with specific task notifications.
     esp_timer_handle_t timer = (esp_timer_handle_t) pvTaskGetThreadLocalStoragePointer(NULL, CONFIG_ESP_MICROSLEEP_TLS_INDEX);
     if (!timer) {
+        // If no timer exists for this task, create one.
         const esp_timer_create_args_t oneshot_timer_args = {
             .callback = esp_microsleep_isr_handler,
-            .arg = (void*) xTaskGetCurrentTaskHandle(),
-            .dispatch_method = ESP_TIMER_ISR,
+            .arg = (void*) xTaskGetCurrentTaskHandle(), // Pass task handle to ISR
+            .dispatch_method = ESP_TIMER_ISR, // Use ISR dispatch for minimal latency
         };
         ESP_ERROR_CHECK(esp_timer_create(&oneshot_timer_args, &timer));
+        // Store the newly created timer handle in the task's TLS for future use.
         vTaskSetThreadLocalStoragePointer(NULL, CONFIG_ESP_MICROSLEEP_TLS_INDEX, (void*) timer);
+        // Consider adding a task deletion callback here to delete the timer when the task exits.
     }
 
-    if (ms == 0) { return; }
+    if (us == 0) { return; } // No delay requested.
 
-    if (ms <= esp_microsleep_compensation) {
-        ets_delay_us(ms);
+    // Compensation Logic:
+    // Setting up and handling the esp_timer introduces a small overhead.
+    // For very short delays, this overhead can be significant compared to the requested delay.
+    // 'esp_microsleep_compensation' (calculated by esp_microsleep_calibrate) estimates this overhead.
+    // If the requested delay 'us' is less than or equal to the compensation value,
+    // it's more efficient to use the busy-waiting ets_delay_us function directly.
+    if (us <= esp_microsleep_compensation) {
+        ets_delay_us(us);
         return;
     }
 
-    ESP_ERROR_CHECK(esp_timer_start_once(timer, ms - esp_microsleep_compensation));
+    // For delays longer than the compensation overhead, use the esp_timer.
+    // Start the one-shot timer for the requested duration minus the compensation value.
+    ESP_ERROR_CHECK(esp_timer_start_once(timer, us - esp_microsleep_compensation));
+    // Wait for notification from the ISR handler indicating the timer has expired.
     xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // or ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 }
 
