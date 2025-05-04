@@ -51,6 +51,7 @@
 
 #include "stdint.h" // for uint64_t
 #include "sdkconfig.h" // for CONFIG_*
+#include "esp_err.h" // for esp_err_t
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,13 +73,17 @@ extern "C" {
 uint64_t esp_microsleep_calibrate();
 
 /**
- * @brief Delay the current task for a specified number of microseconds.
+ * @brief Delays the calling task for a specified number of microseconds.
  *
- * This function delays the current task for the specified number of microseconds.
- * It is a fine grained replacement for `vTaskDelay`, since due to the way FreeRTOS
- * works, you can not achieve reliable delays for small amounts of ticks.
+ * This function serves as a high-precision replacement for `vTaskDelay` for delays
+ * specified in microseconds. Unlike `vTaskDelay`, which has a granularity limited
+ * by the FreeRTOS tick period (typically milliseconds), this function uses an `esp_timer`
+ * and task notifications to achieve accurate blocking delays at the microsecond level.
  *
- * This has been inspired by the discussion at https://esp32.com/viewtopic.php?f=13&t=38644.
+ * For very short delays where the overhead of the `esp_timer` mechanism would be
+ * significant, it internally uses `ets_delay_us` (a busy-wait) based on a calibrated threshold.
+ * This ensures efficiency for short delays while allowing the task to block cooperatively
+ * (yielding the CPU) for longer delays.
  *
  * To achieve concurrency safety when calling this from multiple tasks, FreeRTOS task local storage is used.
  * If you are already using FreeRTOS' task local storage in your program, you need to ensure that
@@ -87,11 +92,15 @@ uint64_t esp_microsleep_calibrate();
  *
  * @param us Microseconds to delay.
  *
- * @return None.
+ * @return
+ *      - ESP_OK: Delay completed successfully.
+ *      - ESP_ERR_INVALID_STATE: Timer is already running (should not typically occur with one-shot timers unless there's a logic error).
+ *      - ESP_ERR_NO_MEM: Failed to create the timer due to lack of memory.
+ *      - Other error codes returned by `esp_timer_create` or `esp_timer_start_once`.
  */
-void esp_microsleep_delay(uint64_t us);
+esp_err_t esp_microsleep_delay(uint64_t us);
 #else
-#warning esp_microsleep not available due to missing configuration
+#warning esp_microsleep not available due to configuration mismatch. Please adjust CONFIG_ESP_MICROSLEEP_TLS_INDEX and CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD.
 #endif // CONFIG_ESP_MICROSLEEP_TLS_INDEX && CONFIG_ESP_TIMER_SUPPORTS_ISR_DISPATCH_METHOD
 
 #ifdef __cplusplus
