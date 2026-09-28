@@ -90,11 +90,14 @@ uint64_t esp_microsleep_calibrate();
  * a) your configuration includes support for FreeRTOS task local storage, and
  * b) the task-local-storage-index you give is not used by another part of your program.
  *
+ * The delay waits on the calling task's notification slot 0. Do not send other task
+ * notifications to that slot of a task that uses this function, as they would end a delay early.
+ *
  * @param us Microseconds to delay.
  *
  * @return
  *      - ESP_OK: Delay completed successfully.
- *      - ESP_ERR_TIMEOUT: The wait was aborted early (e.g. via `xTaskAbortDelay`); the timer has been disarmed.
+ *      - ESP_ERR_TIMEOUT: The wait was aborted early (e.g. via `xTaskAbortDelay`); the timer has been disarmed or its expiry consumed.
  *      - ESP_ERR_INVALID_STATE: Timer is already running (should not typically occur with one-shot timers unless there's a logic error).
  *      - ESP_ERR_NO_MEM: Failed to create the timer due to lack of memory.
  *      - Other error codes returned by `esp_timer_create` or `esp_timer_start_once`.

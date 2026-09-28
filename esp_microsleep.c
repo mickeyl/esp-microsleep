@@ -126,9 +126,13 @@ esp_err_t esp_microsleep_delay(uint64_t us) {
     }
     // Wait for notification from the ISR handler indicating the timer has expired.
     if (xTaskNotifyWait(0, 0, NULL, portMAX_DELAY) != pdTRUE) {
-        // Woken without the timer's notification (xTaskAbortDelay): disarm the one-shot,
-        // or its ISR notifies this task after it may already have been deleted.
-        esp_timer_stop(timer);
+        // Woken without the timer's notification (xTaskAbortDelay). A still armed one-shot is
+        // disarmed. If it has already expired, esp_timer runs the callback outside its lock, so
+        // the notification may still be on its way: wait for it, otherwise it could hit this task
+        // after it has been deleted, or cut the next delay short.
+        if (esp_timer_stop(timer) != ESP_OK) {
+            while (xTaskNotifyWait(0, 0, NULL, portMAX_DELAY) != pdTRUE) {}
+        }
         return ESP_ERR_TIMEOUT;
     }
     return ESP_OK; // Delay completed successfully
