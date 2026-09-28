@@ -94,6 +94,7 @@ uint64_t esp_microsleep_calibrate();
  *
  * @return
  *      - ESP_OK: Delay completed successfully.
+ *      - ESP_ERR_TIMEOUT: The wait was aborted early (e.g. via `xTaskAbortDelay`); the timer has been disarmed.
  *      - ESP_ERR_INVALID_STATE: Timer is already running (should not typically occur with one-shot timers unless there's a logic error).
  *      - ESP_ERR_NO_MEM: Failed to create the timer due to lack of memory.
  *      - Other error codes returned by `esp_timer_create` or `esp_timer_start_once`.

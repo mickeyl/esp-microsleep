@@ -46,7 +46,8 @@ static void esp_microsleep_timer_delete_callback(int index, void *pvHandle)
 {
     if (pvHandle) {
         esp_timer_handle_t timer = (esp_timer_handle_t)pvHandle;
-        // It's generally safe to delete timers that are running or stopped.
+        // esp_timer_delete() refuses to delete an armed timer; stop it first.
+        esp_timer_stop(timer);
         esp_timer_delete(timer);
     }
 }
@@ -124,7 +125,12 @@ esp_err_t esp_microsleep_delay(uint64_t us) {
         return err; // Failed to start timer
     }
     // Wait for notification from the ISR handler indicating the timer has expired.
-    xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // or ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    if (xTaskNotifyWait(0, 0, NULL, portMAX_DELAY) != pdTRUE) {
+        // Woken without the timer's notification (xTaskAbortDelay): disarm the one-shot,
+        // or its ISR notifies this task after it may already have been deleted.
+        esp_timer_stop(timer);
+        return ESP_ERR_TIMEOUT;
+    }
     return ESP_OK; // Delay completed successfully
 }
 
