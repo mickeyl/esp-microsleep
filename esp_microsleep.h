@@ -90,8 +90,21 @@ uint64_t esp_microsleep_calibrate();
  * a) your configuration includes support for FreeRTOS task local storage, and
  * b) the task-local-storage-index you give is not used by another part of your program.
  *
- * The delay waits on the calling task's notification slot 0. Do not send other task
- * notifications to that slot of a task that uses this function, as they would end a delay early.
+ * Note that two distinct per-task indices are involved, which must not be confused:
+ *
+ *  - the task-local-storage index above, which holds the per-task timer handle. It is chosen
+ *    via sdkconfig (`CONFIG_ESP_MICROSLEEP_TLS_INDEX`, default 1).
+ *
+ *  - the task notification index, which the delay waits on. This implementation uses the
+ *    non-indexed FreeRTOS notification API (`xTaskNotifyWait`, `vTaskNotifyGiveFromISR`),
+ *    which the kernel binds to the default index `tskDEFAULT_INDEX_TO_NOTIFY`. That index
+ *    is fixed at 0 by FreeRTOS and cannot be configured, in particular not via sdkconfig:
+ *    `CONFIG_FREERTOS_TASK_NOTIFICATION_ARRAY_ENTRIES` only sets the number of notification
+ *    slots per task, never which one the default API uses.
+ *
+ * Do not send other task notifications to the default slot (index 0) of a task that uses
+ * this function, e.g. via `xTaskNotify`, `xTaskNotifyGive`, or their ISR counterparts, as
+ * they would end a delay early. Notifications sent to indexed slots >= 1 do not interfere.
  *
  * @param us Microseconds to delay.
  *
